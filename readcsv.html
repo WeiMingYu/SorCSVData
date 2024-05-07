@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>CSV檔案讀取與查詢</title>
+    <style>
+        table, th, td {
+            border: 1px solid black;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 5px;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+
+<input type="file" id="csvFileInput" accept=".csv" onchange="loadCSVFile(event)">
+<input type="text" id="searchInput" onkeyup="searchTable()" placeholder="搜尋...">
+<br><br>
+<table id="data-table">
+    <thead>
+        <tr>
+            <th>測試品</th>
+            <th>壓力</th>
+            <th>工作狀態</th>
+            <th>日期時間</th>
+            <th>工作次數</th>
+            <th>保壓次數</th>
+            <!-- 根據您的CSV文件結構添加更多欄位 -->
+        </tr>
+    </thead>
+    <tbody>
+        <!-- CSV資料將被載入這裡 -->
+    </tbody>
+</table>
+
+<script>
+function loadCSVFile(event) {
+    var input = event.target;
+    var reader = new FileReader();
+    reader.onload = function() {
+        var text = reader.result;
+        var data = text.split(/\r\n|\n/);
+        var table = document.getElementById('data-table').getElementsByTagName('tbody')[0];
+
+        // 清空表格
+        table.innerHTML = "";
+
+        // 解析CSV資料並添加到表格中
+        for (var i = 0; i < data.length; i++) {
+            var row = table.insertRow(-1);
+            var cells = data[i].split(',');
+            for (var j = 0; j < cells.length; j++) {
+                var cell = row.insertCell(-1);
+                cell.textContent = cells[j];
+            }
+        }
+    };
+    reader.readAsText(input.files[0]);
+}
+
+function searchTable() {
+    var input, filter, table, tr, td, i, txtValue;
+    input = document.getElementById("searchInput");
+    filter = input.value.toUpperCase();
+    table = document.getElementById("data-table");
+    tr = table.getElementsByTagName("tr");
+
+    // 循環表格每一行，查找匹配項
+    for (i = 1; i < tr.length; i++) {
+        td = tr[i].getElementsByTagName("td");
+        for (var j = 0; j < td.length; j++) {
+            if (td[j]) {
+                txtValue = td[j].textContent || td[j].innerText;
+                if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                    tr[i].style.display = "";
+                    break;
+                } else {
+                    tr[i].style.display = "none";
+                }
+            }
+        }
+    }
+}
+</script>
+
+</body>
+</html>
