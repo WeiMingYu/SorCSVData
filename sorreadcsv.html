@@ -57,23 +57,27 @@ function loadCSVFile(event) {
     reader.onload = function() {
         var text = reader.result;
         var data = text.split(/\r\n|\n/);
+        var fragment = new DocumentFragment();
+        
+        // 解析CSV資料並添加到 DocumentFragment 中
+        data.forEach(function(rowData) {
+            var row = document.createElement('tr');
+            rowData.split(',').forEach(function(cellData) {
+                var cell = document.createElement('td');
+                cell.textContent = cellData;
+                row.appendChild(cell);
+            });
+            fragment.appendChild(row);
+        });
+
+        // 一次性更新 DOM
         var table = document.getElementById('data-table').getElementsByTagName('tbody')[0];
-
-        // 清空表格
         table.innerHTML = "";
-
-        // 解析CSV資料並添加到表格中
-        for (var i = 0; i < data.length; i++) {
-            var row = table.insertRow(-1);
-            var cells = data[i].split(',');
-            for (var j = 0; j < cells.length; j++) {
-                var cell = row.insertCell(-1);
-                cell.textContent = cells[j];
-            }
-        }
+        table.appendChild(fragment);
     };
     reader.readAsText(input.files[0]);
 }
+
 function searchTable() {
     var input, filter, table, tr, td, i, txtValue;
     input = document.getElementById("searchInput");
@@ -98,52 +102,43 @@ function searchTable() {
     }
 }
 
+var sortDirections = {};
 function sortTable(column) {
-    var table, rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
-    table = document.getElementById("data-table");
-    switching = true;
-    // 假設排序方向為升序
-    dir = "desc";
-    // 執行循環，直到沒有需要交換的行
-    while (switching) {
-        switching = false;
-        rows = table.rows;
-        // 循環遍歷除了標題 0中文標題 1英文標題 以外的所有行
-        for (i = 2; i < (rows.length - 1); i++) {
-            shouldSwitch = false;
-            // 獲取要比較的兩個元素
-            x = rows[i].getElementsByTagName("TD")[column];
-            y = rows[i + 1].getElementsByTagName("TD")[column];
-            // 根據排序方向決定是否交換行
-            if (dir == "asc") {
-                if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) {
-                    shouldSwitch = true;
-                    break;
-                }
-            } else if (dir == "desc") {
-                if (x.innerHTML.toLowerCase() < y.innerHTML.toLowerCase()) {
-                    shouldSwitch = true;
-                    break;
-                }
-            }
-        }
-        if (shouldSwitch) {
-            // 如果有標記為需要交換的行，交換它們並標記開關為已完成
-            rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
-            switching = true;
-            switchcount++;
-        } else {
-            // 如果沒有需要交換的行且方向為升序，將方向改為降序然後再次運行循環
-            if (switchcount == 0 && dir == "asc") {
-                dir = "desc";
-                switching = true;
-            } else if (switchcount == 0 && dir == "desc") {
-                dir = "asc";
-                switching = true;
-            }
-        }
+    // 如果 sortDirections[column] 未定義，則初始化為 true
+    if (sortDirections[column] === undefined) {
+        sortDirections[column] = true;
+    } else {
+        // 切換排序方向
+        sortDirections[column] = !sortDirections[column];
     }
+
+    var table = document.getElementById("data-table");
+    var tbody = table.tBodies[0];
+    var rows = Array.from(tbody.rows).slice(1);
+    // 定義比較函數
+    rows.sort(function(rowA, rowB) {
+        // 確保每一行都有足夠的單元格
+        var cellA = rowA.cells[column] || {};
+        var cellB = rowB.cells[column] || {};
+        var textA = (cellA.textContent || '').trim().toLowerCase();
+        var textB = (cellB.textContent || '').trim().toLowerCase();
+
+        // 根據排序方向進行比較
+        if (sortDirections[column]) { // 如果為 true，則升序
+            return textA.localeCompare(textB);
+        } else { // 否則，降序
+            return textB.localeCompare(textA);
+        }
+    });
+    // 使用 DocumentFragment 來更新 DOM
+    var fragment = document.createDocumentFragment();
+    fragment.appendChild(tbody.rows[0]);
+    rows.forEach(function(row) {
+        fragment.appendChild(row);
+    });
+    tbody.appendChild(fragment);
 }
+
 
 </script>
 
